@@ -1,9 +1,14 @@
+from functools import partial
+
+import torch
+from torch.optim import AdamW
 from transformers import (
     Qwen2_5_VLForConditionalGeneration,
     AutoProcessor,
 )
-import torch
-from functools import partial
+from tqdm import tqdm
+from transformers.utils.quantization_config import BitsAndBytesConfig
+from peft import LoraConfig, get_peft_model, TaskType
 
 from dataloader import VQADataset, collate_fn
 
@@ -48,6 +53,40 @@ test_loader = torch.utils.data.DataLoader(
     num_workers=0,
     pin_memory=False,
 )
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.bfloat16,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4",
+)
+lora_config = LoraConfig(
+    r=8,
+    lora_alpha=16,
+    target_modules=["q_proj", "k_proj"],
+    lora_dropout=0.1,
+    bias="none",
+    task_type=TaskType.CAUSAL_LM,
+)
+
+model = get_peft_model(model, lora_config)
+model.print_trainable_parameters()
+optimizer = AdamW(model.parameters(), lr=5e-5)
+
+num_epochs = 1
+total_loss = 0
+model.train()
+for epoch in range(num_epochs):
+    for inputs in tqdm(train_loader):
+        inputs = inputs.to("cuda")
+        labels = inputs.input_ids.clone()
+        outputs = model(**inputs, labels=labels)
+        loss = outputs.loss
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+        total_loss += loss.item()
+    print(f"Epoch {epoch + 1}, Loss: {total_loss / len(train_loader)}")
 
 model.eval()
 for inputs in test_loader:
