@@ -1,4 +1,3 @@
-from sympy import use
 from transformers import (
     Qwen2_5_VLForConditionalGeneration,
     AutoProcessor,
@@ -8,14 +7,12 @@ from functools import partial
 
 from dataloader import VQADataset, collate_fn
 
-# default: Load the model on the available device(s)
 model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
     "Qwen/Qwen2.5-VL-3B-Instruct",
     torch_dtype="auto",
     device_map="auto",
 )
 
-# プロセッサーを初期化
 processor = AutoProcessor.from_pretrained(
     "Qwen/Qwen2.5-VL-3B-Instruct",
     use_fast=True,
@@ -69,7 +66,6 @@ for inputs in test_loader:
         clean_up_tokenization_spaces=False,
     )
 
-    # 結果を出力
     print("=" * 50)
     print("VQA Model Results:")
     print("=" * 50)

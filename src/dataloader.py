@@ -97,10 +97,8 @@ class VQADataset(torch.utils.data.Dataset):
         image_dir,
         has_answer=True,
     ):
-        self.image_dir = image_dir  # 画像ファイルのディレクトリ
-        self.df = pandas.read_json(
-            df_path
-        )  # 画像ファイルのパス，question, answerを持つDataFrame
+        self.image_dir = image_dir
+        self.df = pandas.read_json(df_path)
         self.has_answer = has_answer
 
     def __getitem__(self, idx):
