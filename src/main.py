@@ -12,10 +12,17 @@ from peft import LoraConfig, get_peft_model, TaskType
 
 from dataloader import VQADataset, collate_fn
 
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.bfloat16,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4",
+)
 model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
     "Qwen/Qwen2.5-VL-3B-Instruct",
     torch_dtype="auto",
     device_map="auto",
+    quantization_config=bnb_config,
 )
 
 processor = AutoProcessor.from_pretrained(
@@ -54,12 +61,6 @@ test_loader = torch.utils.data.DataLoader(
     pin_memory=False,
 )
 
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_compute_dtype=torch.bfloat16,
-    bnb_4bit_use_double_quant=True,
-    bnb_4bit_quant_type="nf4",
-)
 lora_config = LoraConfig(
     r=8,
     lora_alpha=16,
